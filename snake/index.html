@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        *{
+            padding:0;
+            margin:0;
+            box-sizing:border-box;
+        }
+
+        .map{
+            width:800px;
+            height:400px;
+            margin:20px auto;
+        }
+
+        .btn,.stop{
+            width:100px;
+            height:40px;
+        }
+
+        .main{
+            width:100%;
+            height:100%;
+            position:relative;
+            background:#dcdcdc;
+        }
+    </style>
+</head>
+<body>
+    <div class="map" id="map">
+        <button class="btn" id="btn">开始游戏</button>
+        <button class="stop" id="stop">暂停游戏</button>
+        得分:<span class="number" id="number"></span>
+        <div class="main" id="main"></div>
+    </div>
+    <script>
+        let main = document.getElementById('main');
+        let span = document.getElementById('number');
+        let number = 0,disable = 0;
+        //设置蛇的构造函数
+        function Snake(){
+            //设置蛇的默认参数
+            this.width = 20;
+            this.height = 20;
+            this.direction = 'right';
+            //设置蛇的默认坐标
+            this.body = [
+                {x:2,y:0},
+                {x:1,y:0},
+                {x:0,y:0}
+            ];
+            //显示蛇身
+            this.display = ()=>{
+                for(let i=0;i<this.body.length;i++){
+                    //当吃到食物的事件，x=null
+                    if(this.body[i].x != null){
+                        let div = document.createElement('div');
+                        this.body[i].flag = div;
+                        div.style.width = this.width + 'px';
+                        div.style.height = this.height + 'px';
+                        div.style.borderRadius = '50%';
+                        div.style.position = 'absolute';
+                        div.style.background = '#333';
+                        div.style.left = this.width * this.body[i].x + 'px';
+                        div.style.top = this.height * this.body[i].y + 'px';
+                        main.appendChild(div);
+                    }
+                }
+                span.innerHTML= number;
+            }
+
+            //设置蛇的运动
+            this.run = ()=>{
+                //然后进行循环改变X轴坐标，后一个坐标等于前一个坐标
+                for(let i=this.body.length-1;i>0;i--){
+                    this.body[i].x = this.body[i-1].x;
+                    this.body[i].y = this.body[i-1].y;
+                }
+                //首先判断蛇的this.direction方向，然后修改x轴
+                switch(this.direction){
+                    case 'left': this.body[0].x -=1;break;
+                    case 'right': this.body[0].x += 1; break;
+                    case 'top': this.body[0].y -= 1; break;
+                    case 'bottom': this.body[0].y += 1;break;
+                }
+                //判断是否出界
+                if(this.body[0].x > 39 || this.body[0].x < 0 || this.body[0].y < 0 || this.body[0].y > 19){
+                    alert('出界了');
+                    clearInterval(timer);
+                    //设置蛇的默认参数
+                    this.width = 20;
+                    this.height = 20;
+                    this.direction = 'right';
+                    //抹去蛇的节点
+                    for(let i=0;i<this.body.length;i++){
+                        main.removeChild(this.body[i].flag);
+                    }
+                    //移除食物
+                    main.removeChild(food.flag);
+                    //吃掉食物后重新显示食物
+                    food.display();
+                    //设置蛇的默认坐标
+                    this.body = [
+                        {x:2,y:0},
+                        {x:1,y:0},
+                        {x:0,y:0}
+                    ];
+                    number = 0;
+                    this.display();
+                    return false;
+                }
+                //判断是否吃到食物
+                if(this.body[0].x == food.x && this.body[0].y == food.y){
+                    this.body.push({x:null,y:null,flag:null});
+                    //移除食物
+                    main.removeChild(food.flag);
+                    //吃掉食物后重新显示食物
+                    food.display();
+                    number += 2;
+                    span.innerHTML = number;
+                }
+                //判断是否自己吃到了自己
+                for(let i=4;i<this.body.length;i++){
+                    if(this.body[0].x == this.body[i].x && this.body[0].y == this.body[i].y){
+                        alert("自己吃到自己了");
+                        clearInterval(timer);
+                        //设置蛇的默认参数
+                        this.width = 20;
+                        this.height = 20;
+                        this.direction = 'right';
+                        //抹去蛇的节点
+                        for(let i=0;i<this.body.length;i++){
+                            main.removeChild(this.body[i].flag);
+                        }
+                        //移除食物
+                        main.removeChild(food.flag);
+                        //吃掉食物后重新显示食物
+                        food.display();
+                        //设置蛇的默认坐标
+                        this.body = [
+                            {x:2,y:0},
+                            {x:1,y:0},
+                            {x:0,y:0}
+                        ];
+                        number = 0;
+                        this.display();
+                        return false;
+                    }
+                }
+                //每次调用都要先抹掉以前的节点
+                for(let i=0;i<this.body.length;i++){
+                    if(this.body[i].flag){
+                        main.removeChild(this.body[i].flag);
+                    }
+                }
+                this.display();
+            }
+        }
+
+        //创建食物的构造函数
+        function Food(){
+            this.width = 20;
+            this.height = 20;
+            this.display = ()=>{
+                let div = document.createElement('div');
+                div.style.width = this.width + 'px';
+                div.style.height = this.height + 'px';
+                div.style.borderRadius = '50%';
+                div.style.background = '#abcdef';
+                div.style.position = 'absolute';
+                this.x = Math.floor(Math.random() * 40);
+                this.y = Math.floor(Math.random() * 20);
+                console.log(this.x);
+                div.style.left = this.x * this.width + 'px';
+                div.style.top = this.y * this.height + 'px';
+                this.flag = div;
+                main.appendChild(div);
+            }
+        }
+        let btn = document.getElementById('btn');
+        let stop = document.getElementById('stop');
+        let snake = new Snake();
+        let food = new Food();
+        let timer;
+        food.display();
+        snake.display();
+        //开始按钮事件
+        btn.onclick = ()=>{
+            clearInterval(timer);
+            timer = setInterval('snake.run()',100);
+        }
+        //暂停按钮事件
+        stop.onclick = ()=>{
+            clearInterval(timer);
+        }
+        //键盘触发时间
+        document.body.onkeydown = (e)=>{
+            let ev = e || window.event;
+            //判断键盘按键
+            if(!disable){
+                disable = 1;
+                switch(ev.keyCode){
+                    case 39:{
+                        if(snake.direction != 'left'){
+                            snake.direction = 'right';
+                            break;
+                        }
+                    }
+                    case 38:{
+                        if(snake.direction != 'bottom'){
+                            snake.direction = 'top';
+                            break;
+                        }
+                    }
+                    case 37:{
+                        if(snake.direction != 'right'){
+                            snake.direction = 'left';
+                            break;
+                        }
+                    }
+                    case 40:{
+                        if(snake.direction != 'top'){
+                            snake.direction = 'bottom';
+                            break;
+                        }
+                    }
+                };
+            }else{
+                //出现这个证明按键过于频繁
+                console.log('按键过于频繁');
+            }
+            setTimeout(()=>{
+                disable = 0;
+            },100);
+        }
+    </script>
+</body>
+</html>
